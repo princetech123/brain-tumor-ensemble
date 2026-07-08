@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="result-header">
+    <h1 class="page-title">About the Neuro-Ensemble Framework</h1>
+    <p class="subtitle">Clinical background, model architecture details, and project documentation.</p>
+</div>
+
+<div class="about-grid">
+    <!-- Clinical Context Card -->
+    <div class="glass-card">
+        <div class="card-header text-cyan">
+            <i class="fa-solid fa-notes-medical card-icon"></i>
+            <h2>Clinical Significance</h2>
+        </div>
+        <p class="about-p">
+            Early detection and classification of brain tumors are critical steps in clinical neuro-oncology. MRI is the standard imaging modality due to its superior soft tissue contrast. However, manual interpretation is time-consuming and subject to inter-observer variability. 
+        </p>
+        <p class="about-p">
+            This framework serves as a computer-aided diagnostic (CAD) utility. By combining predictions from multiple deep learning models using self-attention, it achieves higher diagnostic sensitivity and specificity, providing clinicians with a reliable second opinion.
+        </p>
+        <div class="alert-box-info mt-3">
+            <p><strong><i class="fa-solid fa-shield-halved"></i> Clinical Disclaimer:</strong> This system is a research-grade software project and is not FDA approved. All diagnostic predictions should be verified by a board-certified radiologist.</p>
+        </div>
+    </div>
+
+    <!-- Technical Architecture -->
+    <div class="glass-card">
+        <div class="card-header text-purple">
+            <i class="fa-solid fa-layer-group card-icon"></i>
+            <h2>Model Architecture</h2>
+        </div>
+        <p class="about-p">
+            The framework implements a two-stage training paradigm combining convolutional neural networks (CNNs) and transformer models:
+        </p>
+        <ul class="about-list">
+            <li><strong>ResNet50:</strong> A deep residual network that uses skip connections to prevent gradient vanishing, yielding robust localized spatial feature representations ($2048$ dimensions).</li>
+            <li><strong>EfficientNetB3:</strong> An optimized architecture scaled using compound coefficient scaling (balancing network depth, width, and resolution) to extract high-efficiency features ($1536$ dimensions).</li>
+            <li><strong>Vision Transformer (ViT-B16):</strong> A self-attention architecture that splits images into $16\times16$ patches and models global relationship contexts, yielding a $768$-dimensional classification vector.</li>
+        </ul>
+        <p class="about-p mt-3">
+            The extracted features are projected to a uniform $512$ embedding dimension, stacked, and fused using a multi-head self-attention layer to weigh each backbone model's representations dynamically.
+        </p>
+    </div>
+
+    <!-- Explainability -->
+    <div class="glass-card span-two-cols">
+        <div class="card-header text-green">
+            <i class="fa-solid fa-wand-magic-sparkles card-icon"></i>
+            <h2>Explainable AI (XAI) Methods</h2>
+        </div>
+        <div class="xai-grid">
+            <div class="xai-method">
+                <h3>Grad-CAM (Gradient-Weighted Class Activation Mapping)</h3>
+                <p>
+                    For CNN backbones, we extract activations from the final convolutional layers. By computing the gradients of the tumor classification score with respect to these activations, we calculate the relative importance of each channel. The positive linear combination yields a heatmap displaying the exact spatial structures the model used to identify a tumor.
+                </p>
+            </div>
+            
+            <div class="xai-method">
+                <h3>Transformer Attention Maps</h3>
+                <p>
+                    For the Vision Transformer, we hook into the final self-attention encoder layer. We compute the dot-product similarity between the classification token (which aggregates the overall sequence representation) and the $196$ patch tokens. Reshaping this similarity vector into a $14\times14$ grid yields a direct mapping of the global attention field.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

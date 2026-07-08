@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="hero-section">
+    <h1 class="hero-title">Multi-Model Ensemble Deep Learning Framework</h1>
+    <p class="hero-subtitle">Advanced Clinical Diagnostic Platform for Brain Tumor Detection and Classification Using Multi-Spectral MRI scans.</p>
+</section>
+
+<div class="dashboard-grid">
+    <!-- Left Column: Upload -->
+    <div class="glass-card upload-card">
+        <div class="card-header">
+            <i class="fa-solid fa-cloud-arrow-up card-icon"></i>
+            <h2>Upload MRI Scan</h2>
+        </div>
+        <p class="card-desc">Drag & drop or browse a patient's T1, T2, or FLAIR brain MRI image (PNG/JPG/JPEG).</p>
+        
+        <form action="{{ url_for('upload_mri') }}" method="POST" enctype="multipart/form-data" id="upload-form">
+            <div class="drop-zone" id="drop-zone">
+                <div class="drop-zone-content">
+                    <i class="fa-solid fa-brain drop-brain-icon"></i>
+                    <p class="drop-text">Drag and drop MRI file here</p>
+                    <span class="or-divider">or</span>
+                    <button type="button" class="btn btn-primary" id="browse-btn">Select File</button>
+                    <input type="file" name="file" id="file-input" accept=".png, .jpg, .jpeg" style="display: none;">
+                </div>
+                <div class="drop-zone-preview" id="preview-container" style="display: none;">
+                    <img id="file-preview" src="#" alt="MRI Preview">
+                    <p id="filename-display"></p>
+                    <button type="submit" class="btn btn-success" id="analyze-btn">
+                        <i class="fa-solid fa-microscope"></i> Run Diagnosis
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Right Column: Specs / Pipeline -->
+    <div class="glass-card pipeline-card">
+        <div class="card-header">
+            <i class="fa-solid fa-gears card-icon"></i>
+            <h2>Clinical Preprocessing Pipeline</h2>
+        </div>
+        <div class="pipeline-flow">
+            <div class="pipeline-step">
+                <div class="step-num">1</div>
+                <div class="step-details">
+                    <h3>Resize & RGB Formatting</h3>
+                    <p>Standardizes arbitrary scan resolutions to a model-compliant 224x224 RGB image.</p>
+                </div>
+            </div>
+            <div class="pipeline-step">
+                <div class="step-num">2</div>
+                <div class="step-details">
+                    <h3>Gaussian Blur Filtering</h3>
+                    <p>Smooths out high-frequency thermal noise from the MRI scanner.</p>
+                </div>
+            </div>
+            <div class="pipeline-step">
+                <div class="step-num">3</div>
+                <div class="step-details">
+                    <h3>CLAHE Enhancement</h3>
+                    <p>Contrast-Limited Adaptive Histogram Equalization heightens subtle soft tissue differences.</p>
+                </div>
+            </div>
+            <div class="pipeline-step">
+                <div class="step-num">4</div>
+                <div class="step-details">
+                    <h3>Skull Stripping (Active)</h3>
+                    <p>Applies Otsu binarization and contour maps to segment brain matter from the skull bone.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

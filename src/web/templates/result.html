@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="result-header">
+    <a href="{{ url_for('index') }}" class="btn btn-secondary"><i class="fa-solid fa-arrow-left"></i> Upload Another Scan</a>
+    <h1 class="page-title">Diagnostic Report</h1>
+</div>
+
+<!-- Diagnostics Banner -->
+<div class="diagnostic-banner {% if 'Detected' in classification %}banner-danger{% else %}banner-success{% endif %}">
+    <div class="banner-icon">
+        {% if 'Detected' in classification %}
+            <i class="fa-solid fa-triangle-exclamation"></i>
+        {% else %}
+            <i class="fa-solid fa-circle-check"></i>
+        {% endif %}
+    </div>
+    <div class="banner-info">
+        <h2>Ensemble Diagnosis: <span class="diag-text">{{ classification }}</span></h2>
+        <p>Ensemble Model Confidence Score: <strong>{{ fusion_prob }}%</strong> | Inference Latency: <strong>{{ latency }} ms</strong></p>
+    </div>
+</div>
+
+<div class="result-grid">
+    <!-- Visualizations Card -->
+    <div class="glass-card vis-card">
+        <div class="card-header">
+            <i class="fa-solid fa-images card-icon"></i>
+            <h2>Explainable AI (XAI) Visualizations</h2>
+        </div>
+        
+        <div class="tab-container">
+            <div class="tab-buttons">
+                <button class="tab-btn active" onclick="switchTab(event, 'orig-tab')">Original</button>
+                <button class="tab-btn" onclick="switchTab(event, 'prep-tab')">Preprocessed</button>
+                <button class="tab-btn" onclick="switchTab(event, 'resnet-tab')">ResNet50 Grad-CAM</button>
+                <button class="tab-btn" onclick="switchTab(event, 'effnet-tab')">EfficientNet Grad-CAM</button>
+                <button class="tab-btn" onclick="switchTab(event, 'vit-tab')">ViT-B16 Attention</button>
+            </div>
+            
+            <div class="tab-content active" id="orig-tab">
+                <div class="img-wrapper">
+                    <img src="{{ url_for('static', filename='uploads/' + orig_img) }}" alt="Original MRI">
+                    <span class="img-label">Raw Scan Slice</span>
+                </div>
+            </div>
+            <div class="tab-content" id="prep-tab">
+                <div class="img-wrapper">
+                    <img src="{{ url_for('static', filename='temp/' + prep_img) }}" alt="Preprocessed MRI">
+                    <span class="img-label">Skull-Stripped & CLAHE Enhanced</span>
+                </div>
+            </div>
+            <div class="tab-content" id="resnet-tab">
+                <div class="img-wrapper">
+                    <img src="{{ url_for('static', filename='temp/' + resnet_overlay) }}" alt="ResNet50 Grad-CAM">
+                    <span class="img-label">ResNet50 Heatmap Overlay</span>
+                </div>
+            </div>
+            <div class="tab-content" id="effnet-tab">
+                <div class="img-wrapper">
+                    <img src="{{ url_for('static', filename='temp/' + effnet_overlay) }}" alt="EfficientNet B3 Grad-CAM">
+                    <span class="img-label">EfficientNet B3 Heatmap Overlay</span>
+                </div>
+            </div>
+            <div class="tab-content" id="vit-tab">
+                <div class="img-wrapper">
+                    <img src="{{ url_for('static', filename='temp/' + vit_overlay) }}" alt="ViT Attention">
+                    <span class="img-label">ViT Transformer Attention Map</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats & Fusion Weights -->
+    <div class="glass-card summary-card">
+        <div class="card-header">
+            <i class="fa-solid fa-chart-pie card-icon"></i>
+            <h2>Consensus & Fusion Analysis</h2>
+        </div>
+        
+        <div class="model-predictions">
+            <h3>Individual Model Probabilities</h3>
+            <div class="pred-row">
+                <span class="model-lbl">ResNet50 Confidence:</span>
+                <div class="progress-bar-container">
+                    <div class="progress-bar resnet-bar" style="width: {{ res_prob }}%">{{ res_prob }}%</div>
+                </div>
+            </div>
+            <div class="pred-row">
+                <span class="model-lbl">EfficientNetB3 Confidence:</span>
+                <div class="progress-bar-container">
+                    <div class="progress-bar effnet-bar" style="width: {{ eff_prob }}%">{{ eff_prob }}%</div>
+                </div>
+            </div>
+            <div class="pred-row">
+                <span class="model-lbl">ViT-B16 Confidence:</span>
+                <div class="progress-bar-container">
+                    <div class="progress-bar vit-bar" style="width: {{ vit_prob }}%">{{ vit_prob }}%</div>
+                </div>
+            </div>
+            <div class="pred-row ensemble-row">
+                <span class="model-lbl">Ensemble Fusion Probability:</span>
+                <div class="progress-bar-container">
+                    <div class="progress-bar fusion-bar" style="width: {{ fusion_prob }}%">{{ fusion_prob }}%</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="fusion-attention mt-4">
+            <h3>Dynamic Feature Fusion Attention weights</h3>
+            <p class="section-desc">Self-Attention layer weight distribution allocated to each model features for this scan.</p>
+            
+            <div class="attention-box-grid">
+                <div class="attention-box resnet-border">
+                    <div class="attn-val">{{ resnet_weight }}%</div>
+                    <div class="attn-lbl">ResNet50</div>
+                </div>
+                <div class="attention-box effnet-border">
+                    <div class="attn-val">{{ effnet_weight }}%</div>
+                    <div class="attn-lbl">EfficientNetB3</div>
+                </div>
+                <div class="attention-box vit-border">
+                    <div class="attn-val">{{ vit_weight }}%</div>
+                    <div class="attn-lbl">ViT-B16</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

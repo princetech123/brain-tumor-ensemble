@@ -1,0 +1,30 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Environments
+.venv/
+venv/
+ENV/
+env/
+
+# Datasets & Checkpoints
+data/
+checkpoints/
+logs/
+
+# Flask uploads / temp files
+src/web/static/uploads/orig_*
+src/web/static/temp/cam_*
+src/web/static/temp/attn_*
+src/web/static/temp/prep_*
+src/web/static/eval/*.png
+
+# IDEs
+.vscode/
+.idea/
+.DS_Store

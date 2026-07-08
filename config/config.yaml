@@ -1,0 +1,62 @@
+# Brain Tumor Detection and Classification Configuration
+# REAL DATA MODE: Kaggle dataset with 7200 real MRI images
+
+paths:
+  dataset_dir: "data/sample_mri"
+  checkpoint_dir: "checkpoints"
+  log_dir: "logs"
+  metrics_file: "logs/metrics.json"
+  upload_dir: "src/web/static/uploads"
+  temp_dir: "src/web/static/temp"
+
+data:
+  image_size: [128, 128]     # Bigger than 64 but faster than 224
+  batch_size: 16
+  train_split: 0.8
+  val_split: 0.1
+  num_workers: 0             # 0 = safe on macOS
+
+preprocessing:
+  clahe_clip_limit: 2.0
+  clahe_tile_grid_size: [8, 8]
+  gaussian_kernel_size: [5, 5]
+  gaussian_sigma: 1.0
+  enable_skull_strip: false  # Keep disabled for speed
+  augmentation:
+    rotation_range: 15
+    zoom_range: [0.9, 1.1]
+    brightness_range: [0.9, 1.1]
+    translation_range: [0.05, 0.05]
+    horizontal_flip: true
+
+training:
+  backbone:
+    epochs: 5                # More epochs with real data
+    learning_rate: 0.0001
+    weight_decay: 0.00001
+    early_stopping_patience: 3
+    lr_reduction_factor: 0.5
+    lr_reduction_patience: 2
+  fusion:
+    epochs: 8
+    learning_rate: 0.0005
+    weight_decay: 0.0001
+    early_stopping_patience: 3
+    lr_reduction_factor: 0.5
+    lr_reduction_patience: 2
+
+models:
+  resnet:
+    name: "resnet50"
+    feature_dim: 2048
+  efficientnet:
+    name: "efficientnet_b3"
+    feature_dim: 1536
+  vit:
+    name: "vit_b_16"
+    feature_dim: 768
+  fusion:
+    attention_heads: 4
+    dropout: 0.4
+    dense_dim_1: 512
+    dense_dim_2: 256
