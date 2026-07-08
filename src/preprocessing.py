@@ -1,3 +1,14 @@
+"""
+Advanced preprocessing module for Brain MRI analysis.
+Includes CLAHE normalization, augmentation, and dataset loading.
+
+Key improvements:
+- CLAHE for medical image enhancement
+- Multiple augmentation strategies
+- Deterministic preprocessing pipeline
+- Compatible with PyTorch DataLoader
+"""
+
 import os
 import cv2
 import numpy as np
@@ -6,6 +17,14 @@ from torch.utils.data import Dataset
 from torchvision import transforms
 from PIL import Image
 from typing import Dict, Any, Tuple, Optional
+
+# Optional: Advanced augmentation (install albumentations for production)
+try:
+    import albumentations as A
+    from albumentations.pytorch import ToTensorV2
+    HAS_ALBUMENTATIONS = True
+except ImportError:
+    HAS_ALBUMENTATIONS = False
 
 class MRIPreprocessor:
     """Handles clinical preprocessing steps for Brain MRI scans."""

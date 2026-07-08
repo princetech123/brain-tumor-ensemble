@@ -1,5 +1,6 @@
 # Brain Tumor Detection and Classification Configuration
-# REAL DATA MODE: Kaggle dataset with 7200 real MRI images
+# RESEARCH-GRADE: Advanced training pipeline with progressive unfreezing, AMP, CosineAnnealing
+# Dataset: Kaggle Brain Tumor MRI (or synthetic data for testing)
 
 paths:
   dataset_dir: "data/sample_mri"
@@ -8,55 +9,172 @@ paths:
   metrics_file: "logs/metrics.json"
   upload_dir: "src/web/static/uploads"
   temp_dir: "src/web/static/temp"
+  plots_dir: "logs/plots"
 
 data:
-  image_size: [128, 128]     # Bigger than 64 but faster than 224
-  batch_size: 16
+  image_size: [128, 128]     # Balanced: detail vs speed
+  batch_size: 16             # Adjust based on GPU memory
   train_split: 0.8
   val_split: 0.1
-  num_workers: 0             # 0 = safe on macOS
+  test_split: 0.1
+  num_workers: 0             # 0 = safe on macOS, increase for Linux
+  random_seed: 42            # Deterministic training
 
 preprocessing:
-  clahe_clip_limit: 2.0
-  clahe_tile_grid_size: [8, 8]
+  # CLAHE (Contrast Limited Adaptive Histogram Equalization)
+  clahe_clip_limit: 2.0      # Controls contrast enhancement
+  clahe_tile_grid_size: [8, 8]  # Tile size for CLAHE
+  
+  # Gaussian Blur for noise reduction
   gaussian_kernel_size: [5, 5]
   gaussian_sigma: 1.0
-  enable_skull_strip: false  # Keep disabled for speed
+  
+  # Skull stripping (optional, improves on some datasets)
+  enable_skull_strip: false
+  
+  # MRI-specific normalization
+  normalize_method: "standard"  # standard, minmax, or robust
+  
+  # Data Augmentation (applied during training)
   augmentation:
-    rotation_range: 15
-    zoom_range: [0.9, 1.1]
-    brightness_range: [0.9, 1.1]
-    translation_range: [0.05, 0.05]
+    # Random rotation (±degrees)
+    rotation_range: 20
+    
+    # Random zoom/scale
+    zoom_range: [0.85, 1.15]
+    
+    # Brightness adjustment
+    brightness_range: [0.85, 1.15]
+    
+    # Random shift
+    translation_range: [0.1, 0.1]
+    
+    # Flip augmentations
     horizontal_flip: true
+    vertical_flip: false  # Usually not used for medical images
+    
+    # Affine transformations
+    affine_enabled: true
+    shear_range: 0.15
 
+# Research-grade training configuration
 training:
+  # General settings
+  random_seed: 42
+  deterministic: true        # Ensures reproducible results
+  use_amp: true              # Automatic Mixed Precision (faster + less memory)
+  use_kfold: true            # 5-Fold cross-validation
+  num_folds: 5
+  
+  # Early Stopping
+  early_stopping_enabled: true
+  early_stopping_patience: 7 # Stop if no improvement for 7 epochs
+  early_stopping_delta: 1e-4
+  
   backbone:
-    epochs: 5                # More epochs with real data
-    learning_rate: 0.0001
-    weight_decay: 0.00001
-    early_stopping_patience: 3
-    lr_reduction_factor: 0.5
-    lr_reduction_patience: 2
+    epochs: 50                # Increased from 5 for research quality
+    learning_rate: 2e-4       # Start with lower LR for transfer learning
+    weight_decay: 1e-5        # L2 regularization
+    
+    # Progressive unfreezing strategy
+    unfreeze_strategy: "progressive"  # Options: progressive, last_k_layers
+    unfreeze_at_epoch: 15     # Unfreeze after this epoch
+    last_k_layers: 2          # Unfreeze last 2 blocks
+    
+    # CosineAnnealingLR scheduler
+    scheduler: "cosine_annealing"
+    t_max: 50                 # Maximum iterations (epochs)
+    eta_min: 1e-7             # Minimum learning rate
+    
+    # Optimizer: AdamW
+    optimizer: "adamw"
+    betas: [0.9, 0.999]
+    eps: 1e-8
+    
+    # Loss function
+    loss_function: "weighted_bce"  # weighted_bce or focal
+    class_weights: [1.0, 1.5]      # Weight for negative and positive classes
+  
   fusion:
-    epochs: 8
-    learning_rate: 0.0005
-    weight_decay: 0.0001
-    early_stopping_patience: 3
-    lr_reduction_factor: 0.5
-    lr_reduction_patience: 2
+    epochs: 50
+    learning_rate: 5e-4
+    weight_decay: 1e-4
+    
+    unfreeze_strategy: "progressive"
+    unfreeze_at_epoch: 10
+    
+    scheduler: "cosine_annealing"
+    t_max: 50
+    eta_min: 1e-7
+    
+    optimizer: "adamw"
+    betas: [0.9, 0.999]
+    
+    loss_function: "weighted_bce"
+    class_weights: [1.0, 1.5]
+
+# Inference configuration
+inference:
+  # Test Time Augmentation (TTA)
+  use_tta: true
+  tta_augmentations: 4       # Number of TTA augmentations
+  
+  # Threshold for binary classification
+  decision_threshold: 0.5
 
 models:
   resnet:
     name: "resnet50"
     feature_dim: 2048
+    pretrained: true         # Use pretrained ImageNet weights
+    
   efficientnet:
     name: "efficientnet_b3"
     feature_dim: 1536
+    pretrained: true
+    
   vit:
     name: "vit_b_16"
     feature_dim: 768
+    pretrained: true
+    
   fusion:
-    attention_heads: 4
+    # Attention-based fusion
+    projection_dim: 512       # Common projection dimension
+    attention_heads: 4        # Multi-head attention
+    attention_layers: 1
+    
+    # Classification head
     dropout: 0.4
     dense_dim_1: 512
     dense_dim_2: 256
+    
+    # Trainable weighted fusion
+    use_learnable_weights: true  # Learn weight for each backbone
+
+# Evaluation and metrics
+evaluation:
+  # Compute these metrics during training
+  metrics:
+    - accuracy
+    - precision
+    - recall
+    - specificity
+    - f1_score
+    - roc_auc
+    - confusion_matrix
+  
+  # Save plots
+  save_plots: true
+  plot_types:
+    - training_curves
+    - confusion_matrix
+    - roc_curve
+    - precision_recall_curve
+
+# Logging
+logging:
+  tensorboard_enabled: true
+  save_frequency: 10         # Save checkpoint every N epochs
+  log_frequency: 50          # Log metrics every N batches
+  verbose: true

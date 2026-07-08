@@ -82,15 +82,76 @@ Ensure all components are operating correctly:
 python3 -m unittest discover tests/
 ```
 
-### 4. Train the Ensemble
-Fine-tune the backbones and train the attention fusion head:
+### 4. Train the Ensemble (Research-Grade Pipeline)
+
+#### Option A: Advanced Training (Recommended for Research)
+The new `training_v2.py` implements a comprehensive research-grade training pipeline:
+
+```bash
+python3 src/training_v2.py
+```
+
+**Features of research-grade training:**
+- ✅ **Deterministic Training**: Fixed random seeds for reproducibility
+- ✅ **Progressive Unfreezing**: Prevents catastrophic forgetting of pre-trained features
+- ✅ **AdamW Optimizer**: Better convergence than standard Adam
+- ✅ **CosineAnnealingLR**: Smooth learning rate schedule mimicking cosine decay
+- ✅ **Automatic Mixed Precision (AMP)**: Faster training with reduced memory usage
+- ✅ **50 Epochs**: Extended training for better performance
+- ✅ **Early Stopping (patience=7)**: Prevents overfitting automatically
+- ✅ **Best Model Checkpointing**: Saves best weights during training
+- ✅ **Complete TensorBoard Logging**: Monitor training in real-time with `tensorboard --logdir logs/`
+- ✅ **5-Fold Cross Validation**: Robust performance estimation
+- ✅ **Weighted CrossEntropyLoss**: Handles class imbalance
+- ✅ **Test Time Augmentation (TTA)**: Improves inference robustness
+- ✅ **Trainable Attention Weights**: Learned importance for each backbone
+- ✅ **Comprehensive Metrics**: Accuracy, Precision, Recall, Specificity, F1, ROC-AUC
+- ✅ **Automatic Plot Generation**: Training curves and confusion matrices
+
+**Configuration Options** (`config/config.yaml`):
+```yaml
+training:
+  use_kfold: true              # Enable 5-Fold Cross Validation
+  num_folds: 5
+  use_amp: true                # Enable Automatic Mixed Precision
+  early_stopping_patience: 7   # Stop if no improvement for 7 epochs
+  
+  backbone:
+    epochs: 50                 # Increased from 5 for research quality
+    learning_rate: 2e-4
+    scheduler: "cosine_annealing"
+    unfreeze_at_epoch: 15      # Unfreeze after 15 epochs
+    
+  fusion:
+    epochs: 50
+    learning_rate: 5e-4
+```
+
+**Monitoring Training**:
+```bash
+# In separate terminal
+tensorboard --logdir logs/
+# Then open http://localhost:6006
+```
+
+#### Option B: Legacy Training (Backward Compatible)
+If you prefer the original training pipeline:
 ```bash
 python3 src/training.py
 ```
-This script saves trained checkpoints to `checkpoints/` and writes charts and comparative metrics (`logs/metrics.json`) to the static assets directory.
 
-### 5. Launch the Web Application
+**Note**: This script saves trained checkpoints to `checkpoints/` and writes metrics to `logs/metrics.json`
+
+### 5. Evaluate on Test Set
+After training, evaluate comprehensive metrics:
+```bash
+python3 src/evaluation.py
+```
+
+### 6. Launch the Web Application
 ```bash
 python3 src/web/app.py
 ```
 Open [http://localhost:5001](http://localhost:5001) in your browser.
+
+The Flask UI automatically loads the trained checkpoints from `checkpoints/` directory.
